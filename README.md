@@ -2,7 +2,7 @@
 
 Giving a stylish 60s-inspired lamp a 21st-century brain with ESP32 and Apple HomeKit.
 
-> ⚠️ Heads up! This is an active project. I'm currently waiting on some MOSFETs to finalize the build. I'll be adding wiring diagrams and a final component list soon!
+> ⚠️ Heads up WIP! This is an active project. I'm currently waiting on some MOSFETs to finalize the build. I'll be adding wiring diagrams and a final component list soon!
 
 ## The Story
 I had this awesome 60s-inspired mushroom lamp—you've probably seen them all over Pinterest and Instagram. It looked great, but the cheap, built-in controller was a pain.
