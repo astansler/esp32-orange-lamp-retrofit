@@ -1,9 +1,22 @@
-# Smart Orange - HomeSpan Dimmable LED with DHT11 Sensor
+# Smart Orange Lamp 🍊
 
-This HomeSpan sketch provides a complete HomeKit integration for ESP32 with:
-- Dimmable LED control (pin 21)
-- Physical button control (pin 18)
-- DHT11 temperature and humidity sensor (pin 19)
+Giving a stylish 60s-inspired lamp a 21st-century brain with ESP32 and Apple HomeKit.
+
+> ⚠️ Heads up! This is an active project. I'm currently waiting on some MOSFETs to finalize the build. I'll be adding wiring diagrams and a final component list soon!
+
+## The Story
+I had this awesome 60s-inspired mushroom lamp—you've probably seen them all over Pinterest and Instagram. It looked great, but the cheap, built-in controller was a pain.
+
+The biggest problem? I couldn't just use a simple smart switch or smart bulbs. Turning the power off and on would reset all its settings (brightness, color temperature), which would force me to walk over and fiddle with it every single time.
+
+I believe that if something is electronic, it should be smart. Especially with AI agents become more common in our lives, I want to control my environment in a seamless way. It's a perfect opportunity to improve a beautiful object and give it a seconds life.
+
+This project is the result: a complete retrofit that turns a stylish but dumb lamp into a fully integrated HomeKit device.
+
+## What It Does
+- 💡 Smart Lighting Control: Integrates directly with Apple HomeKit. Turn the lamp on/off and adjust brightness, color temperature from your devices.
+- 🌡️ Temperature & 💧 Humidity Sensing: An onboard DHT11 sensor exposes live temperature and humidity data as separate accessories in the Home app.
+- 👆 Physical Button Override: Don't want to use your phone? No problem. The original button is now smarter.
 
 ## Features
 
@@ -49,40 +62,16 @@ This HomeSpan sketch provides a complete HomeKit integration for ESP32 with:
 
 ## Wiring Diagram
 
-```
-ESP32 Pin Connections:
-┌─────────────────┐
-│       ESP32     │
-│                 │
-│ Pin 18 ─────────┼─── Push Button ──── GND
-│                 │
-│ Pin 19 ─────────┼─── DHT11 Data Pin
-│                 │    (with 10kΩ pull-up to 3.3V)
-│ Pin 21 ─────────┼─── LED Anode
-│                 │
-│ 3.3V ───────────┼─── DHT11 VCC
-│                 │
-│ GND ────────────┼─── DHT11 GND, LED Cathode, Button
-└─────────────────┘
-
-DHT11 Pinout (when facing the sensor):
-┌─────────────┐
-│ 1 2 3 4     │
-│ VCC Data NC GND
-└─────────────┘
-```
+TBD
 
 ## Installation
 
 1. **Install Required Libraries**:
-   - **HomeSpan** (via Arduino Library Manager)
+   - **HomeSpan** (via Arduino Library Manager) - **REQUIRED**
    - **DHT sensor library by Adafruit** (via Arduino Library Manager) - **REQUIRED**
-   - **Adafruit Unified Sensor library** (dependency of DHT library) - **REQUIRED**
-   
-   **Important**: The DHT sensor library by Adafruit is essential for the temperature and humidity sensors to work. Without it, the sketch will not compile.
 
 2. **Upload the Sketch**:
-   - Open `smart_orange.ino` in Arduino IDE
+   - Open `esp32-orange-lamp-retrofit.ino` in Arduino IDE
    - Select your ESP32 board (choose the most appropriate for your module)
    - If you encounter memory issues, switch to **ESP32 Dev Module** with **Huge APP (3MB No OTA)** partition scheme
    - Upload the sketch
