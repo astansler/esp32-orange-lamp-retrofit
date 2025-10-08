@@ -10,64 +10,33 @@
 
 #include "HomeSpan.h"
 #include "DEV_LED.h"
-#include "DEV_DHT11.h"
 
 void setup() {
 
   Serial.begin(115200);
 
   // Initialize HomeSpan with Lighting category
-  homeSpan.begin(Category::Lighting, "Smart Orange");
+  homeSpan.begin(Category::Lighting, "Smart Orange Lamp");
 
-  // Create first accessory - Dimmable LED with button control
-  new SpanAccessory(); 
-  
-    new Service::AccessoryInformation(); 
+  // Create one accessory for the Tunable White Light
+  new SpanAccessory();
+
+    new Service::AccessoryInformation();
       new Characteristic::Identify();
-      new Characteristic::Name("Smart Orange LED");
+      new Characteristic::Name("Orange Lamp");
       new Characteristic::Manufacturer("HomeSpan");
       new Characteristic::SerialNumber("ORANGE-001");
-      new Characteristic::Model("Smart Orange LED with Button");
-      new Characteristic::FirmwareRevision("1.0");
+      new Characteristic::Model("Orange Lamp 1.0");
+      new Characteristic::FirmwareRevision("2.0");
 
-    // Create dimmable LED with button control on pin 18
-    // LED pin: 21, Button pin: 18
-    new DEV_DimmableLED_WithButton(21, 18);
-
-  // Create second accessory - Temperature Sensor
-  new SpanAccessory(); 
-  
-    new Service::AccessoryInformation();    
-      new Characteristic::Identify();
-      new Characteristic::Name("Orange Temperature");
-      new Characteristic::Manufacturer("HomeSpan");
-      new Characteristic::SerialNumber("ORANGE-TEMP-001");
-      new Characteristic::Model("Smart Orange Temperature Sensor");
-      new Characteristic::FirmwareRevision("1.0");
-  
-    // Create temperature sensor (DHT11 pin: 19)
-    new DEV_DHT11_Temperature(19);
-
-  // Create third accessory - Humidity Sensor
-  new SpanAccessory(); 
-  
-    new Service::AccessoryInformation();    
-      new Characteristic::Identify();
-      new Characteristic::Name("Orange Humidity");
-      new Characteristic::Manufacturer("HomeSpan");
-      new Characteristic::SerialNumber("ORANGE-HUM-001");
-      new Characteristic::Model("Smart Orange Humidity Sensor");
-      new Characteristic::FirmwareRevision("1.0");
-  
-    // Create humidity sensor (DHT11 pin: 19 - same sensor)
-    new DEV_DHT11_Humidity(19);
+    // Create a Tunable White LED with button control
+    // Warm Pin: 22, Cool Pin: 23, Button pin: 18
+    new DEV_TunableWhiteLED_WithButton(22, 23, 18);
 
 } // end of setup()
 
-//////////////////////////////////////
-
 void loop(){
-  
+
   homeSpan.poll();
-  
+
 } // end of loop()

@@ -1,82 +1,93 @@
-////////////////////////////////////
-//   DEVICE-SPECIFIC LED SERVICES //
-////////////////////////////////////
+//////////////////////////////////////////////////////
+//   DEVICE-SPECIFIC TUNABLE WHITE LED SERVICES     //
+//////////////////////////////////////////////////////
 
-struct DEV_DimmableLED_WithButton : Service::LightBulb {       // Dimmable LED with Button Control
+struct DEV_TunableWhiteLED_WithButton : Service::LightBulb {
 
-  LedPin *ledPin;                                   // PWM LED pin
-  SpanCharacteristic *power;                        // reference to the On Characteristic
-  SpanCharacteristic *level;                        // reference to the Brightness Characteristic
-  SpanButton *pushButton;                           // button for manual control
-  
-  DEV_DimmableLED_WithButton(int ledPin, int buttonPin) : Service::LightBulb(){
+  // Characteristics for this service
+  SpanCharacteristic *power;
+  SpanCharacteristic *level;
+  SpanCharacteristic *temp;
 
-    power = new Characteristic::On();     
-    level = new Characteristic::Brightness(50);       // Initial brightness 50%
-    level->setRange(5, 100, 1);                       // Range: 5% to 100%, steps of 1%
+  // Hardware Pins
+  LedPin *warmPin;
+  LedPin *coolPin;
+  SpanButton *pushButton;
 
-    this->ledPin = new LedPin(ledPin);                // Configure PWM LED
-    
-    // Configure button with explicit settings
-    pinMode(buttonPin, INPUT_PULLUP);                 // Enable internal pull-up
-    this->pushButton = new SpanButton(buttonPin, 2000, 50, 200, SpanButton::TRIGGER_ON_LOW);
-    Serial.printf("Button configured on pin %d\n", buttonPin);
-    
+  DEV_TunableWhiteLED_WithButton(int warmLEDPin, int coolLEDPin, int buttonPin) : Service::LightBulb(){
+
+    // Initialize the Characteristics
+    power = new Characteristic::On();
+    level = new Characteristic::Brightness(100);
+    level->setRange(5, 100, 1);
+
+    // Color Temperature is measured in Mireds. 140 is cool (~7000K), 500 is warm (~2000K).
+    temp = new Characteristic::ColorTemperature(320); // Default to a neutral white
+    temp->setRange(140, 500, 1);
+
+    // Configure the PWM LED pins
+    this->warmPin = new LedPin(warmLEDPin);
+    this->coolPin = new LedPin(coolLEDPin);
+
+    // Configure button
+    pinMode(buttonPin, INPUT_PULLUP);
+    this->pushButton = new SpanButton(buttonPin);
+
   } // end constructor
 
-  boolean update(){                              // update() method
+  boolean update() override {
 
-    // Set LED brightness based on power state and brightness level
-    ledPin->set(power->getNewVal() * level->getNewVal());    
-   
-    return(true);                               // return true
-  
+    boolean p = power->getNewVal();
+    int brightness = level->getNewVal();
+    int mired = temp->getNewVal();
+
+    // If power is off, turn both LEDs off
+    if (!p) {
+      warmPin->set(0);
+      coolPin->set(0);
+      return(true);
+    }
+
+    // Convert Mireds color temp to a 0-1 ratio for warm/cool mixing
+    // 0.0 = fully cool, 1.0 = fully warm
+    float warmRatio = (float)(mired - 140) / (500 - 140);
+
+    // Calculate the brightness for each channel
+    int warmBrightness = brightness * warmRatio;
+    int coolBrightness = brightness * (1 - warmRatio);
+
+    // Set the PWM values
+    warmPin->set(warmBrightness);
+    coolPin->set(coolBrightness);
+
+    return(true);
+
   } // update
 
-  void button(int buttonPin, int pressType) override {  // button() method for manual control
+  void button(int buttonPin, int pressType) override {
 
-    Serial.printf("HomeSpan Button Event: pin=%d, type=%d\n", buttonPin, pressType);
+    if(pressType == SpanButton::SINGLE) {
+      power->setVal(!power->getVal());
+    }
+    else if(pressType == SpanButton::DOUBLE) {
+      power->setVal(true);
+      level->setVal(100);
+      temp->setVal(320); // Set to neutral white at 100%
+    }
+    else if(pressType == SpanButton::LONG) {
+      power->setVal(true);
+      int currentMired = temp->getVal();
 
-    if(pressType == SpanButton::SINGLE) {               // Single press: toggle power
-      bool newPowerState = !power->getVal();
-      power->setVal(newPowerState);
-      Serial.printf("Button single press: LED %s\n", newPowerState ? "ON" : "OFF");
-      
-      // Manually update LED hardware
-      ledPin->set(newPowerState * level->getVal());
-      Serial.printf("LED hardware updated: power=%s, brightness=%d%%, actual=%d%%\n", 
-                    newPowerState ? "ON" : "OFF", level->getVal(), newPowerState * level->getVal());
+      if(currentMired > 400)      // If it's warm...
+        temp->setVal(140);        // ...make it cool.
+      else if(currentMired < 240) // If it's cool...
+        temp->setVal(500);        // ...make it warm.
+      else                        // If it's neutral...
+        temp->setVal(500);        // ...make it warm.
     }
-    else if(pressType == SpanButton::DOUBLE) {          // Double press: set to favorite brightness (75%)
-      power->setVal(true);
-      level->setVal(75);
-      Serial.println("Button double press: LED ON at 75%");
-      
-      // Manually update LED hardware
-      ledPin->set(75);
-      Serial.println("LED hardware updated: 75%");
-    }
-    else if(pressType == SpanButton::LONG) {            // Long press: cycle through brightness levels
-      int currentLevel = level->getVal();
-      int newLevel;
-      
-      if(currentLevel < 25) newLevel = 25;
-      else if(currentLevel < 50) newLevel = 50;
-      else if(currentLevel < 75) newLevel = 75;
-      else if(currentLevel < 100) newLevel = 100;
-      else newLevel = 5;
-      
-      power->setVal(true);
-      level->setVal(newLevel);
-      Serial.printf("Button long press: LED ON at %d%%\n", newLevel);
-      
-      // Manually update LED hardware
-      ledPin->set(newLevel);
-      Serial.printf("LED hardware updated: %d%%\n", newLevel);
-    }
-    
+
+    // After a button press, the update() method is called automatically.
+
   } // button
-  
-}; // end DEV_DimmableLED_WithButton
-      
-//////////////////////////////////
+
+};
