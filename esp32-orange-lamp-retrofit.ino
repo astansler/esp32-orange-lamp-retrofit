@@ -12,9 +12,17 @@
 #include "HomeSpan.h"
 #include "DEV_LED.h"
 
+#define BUTTON_PIN_BRIGHTNESS 4
+#define BUTTON_PIN_COLOR 5
+#define LED_PIN_WARM 6
+#define LED_PIN_COOL 7
+
 void setup() {
 
   Serial.begin(115200);
+
+  pinMode(BUTTON_PIN_BRIGHTNESS, INPUT_PULLUP);
+  pinMode(BUTTON_PIN_COLOR, INPUT_PULLUP);
 
   // Initialize HomeSpan with Lighting category
   homeSpan.begin(Category::Lighting, "Smart Orange Lamp");
@@ -31,9 +39,7 @@ void setup() {
       new Characteristic::FirmwareRevision("2.0");
 
     // Create a Tunable White LED with dual button control
-    // Warm Pin: GPIO 21, Cool Pin: GPIO 20
-    // Button 1 (Control): GPIO 9, Button 2 (Color): GPIO 10
-    new DEV_TunableWhiteLED_WithButtons(21, 20, 9, 10);
+    new DEV_TunableWhiteLED_WithButtons(LED_PIN_WARM, LED_PIN_COOL, BUTTON_PIN_BRIGHTNESS, BUTTON_PIN_COLOR);
 
 } // end of setup()
 

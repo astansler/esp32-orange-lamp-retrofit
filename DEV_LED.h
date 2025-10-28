@@ -89,6 +89,7 @@ struct DEV_TunableWhiteLED_WithButtons : Service::LightBulb {
 
   // Button handler: called when buttons are pressed
   void button(int pin, int pressType) override {
+    return;
 
     LOG1("Button press: Pin=%d, Type=%d\n", pin, pressType);
 
