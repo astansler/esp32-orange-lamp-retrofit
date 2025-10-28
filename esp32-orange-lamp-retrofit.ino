@@ -1,10 +1,11 @@
 ////////////////////////////////////////////////////////////
 //                                                        //
-// Smart Orange - Dimmable LED with DHT11 Sensor          //
+// Orange Lamp - Tunable White LED Retrofit               //
 // Features:                                              //
-// - Dimmable LED on pin 21 controlled via HomeKit        //
-// - Physical button on pin 18 for manual control         //
-// - DHT11 sensor for temperature and humidity readings   //
+// - Dual-channel PWM control (Warm + Cool White)         //
+// - 20kHz PWM frequency (prevents coil whine)            //
+// - Two physical buttons for control                     //
+// - HomeKit integration via HomeSpan                     //
 //                                                        //
 ////////////////////////////////////////////////////////////
 
@@ -15,10 +16,8 @@ void setup() {
 
   Serial.begin(115200);
 
-  // Initialize HomeSpan with Lighting category
-  homeSpan.begin(Category::Lighting, "Smart Orange Lamp");
+  homeSpan.begin(Category::Lighting, "Orange Lamp");
 
-  // Create one accessory for the Tunable White Light
   new SpanAccessory();
 
     new Service::AccessoryInformation();
@@ -29,14 +28,12 @@ void setup() {
       new Characteristic::Model("Orange Lamp 1.0");
       new Characteristic::FirmwareRevision("2.0");
 
-    // Create a Tunable White LED with button control
-    // Warm Pin: 22, Cool Pin: 23, Button pin: 18
-    new DEV_TunableWhiteLED_WithButton(22, 23, 18);
+    new DEV_OrangeLamp(21, 20, 9, 10);
 
-} // end of setup()
+}
 
-void loop(){
+void loop() {
 
   homeSpan.poll();
 
-} // end of loop()
+}
