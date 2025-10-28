@@ -29,6 +29,9 @@ struct DEV_OrangeLamp : Service::LightBulb {
     warmLED = new LedPin(warmPin, 0, 20000);
     coolLED = new LedPin(coolPin, 0, 20000);
 
+    pinMode(button1Pin, INPUT_PULLUP);
+    pinMode(button2Pin, INPUT_PULLUP);
+
     controlButton = new SpanButton(button1Pin, 500);
     colorButton = new SpanButton(button2Pin, 500);
 
