@@ -21,10 +21,8 @@ void setup() {
 
   Serial.begin(115200);
 
-  pinMode(BUTTON_PIN_BRIGHTNESS, INPUT_PULLUP);
-  pinMode(BUTTON_PIN_COLOR, INPUT_PULLUP);
-
   // Initialize HomeSpan with Lighting category
+  // NOTE: SpanButton handles pin configuration - do NOT call pinMode() manually
   homeSpan.begin(Category::Lighting, "Smart Orange Lamp");
 
   // Create one accessory for the Tunable White Light
