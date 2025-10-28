@@ -1,10 +1,11 @@
 ////////////////////////////////////////////////////////////
 //                                                        //
-// Smart Orange - Dimmable LED with DHT11 Sensor          //
+// ESP32-C3 Orange Lamp Retrofit - HomeKit Control        //
 // Features:                                              //
-// - Dimmable LED on pin 21 controlled via HomeKit        //
-// - Physical button on pin 18 for manual control         //
-// - DHT11 sensor for temperature and humidity readings   //
+// - Tunable White LED with PWM control (20kHz)          //
+// - Warm White LED on GPIO 21, Cool White on GPIO 20    //
+// - Physical button on GPIO 9 for power/brightness      //
+// - Physical button on GPIO 10 for color temp control   //
 //                                                        //
 ////////////////////////////////////////////////////////////
 
@@ -29,9 +30,10 @@ void setup() {
       new Characteristic::Model("Orange Lamp 1.0");
       new Characteristic::FirmwareRevision("2.0");
 
-    // Create a Tunable White LED with button control
-    // Warm Pin: 22, Cool Pin: 23, Button pin: 18
-    new DEV_TunableWhiteLED_WithButton(22, 23, 18);
+    // Create a Tunable White LED with dual button control
+    // Warm Pin: GPIO 21, Cool Pin: GPIO 20
+    // Button 1 (Control): GPIO 9, Button 2 (Color): GPIO 10
+    new DEV_TunableWhiteLED_WithButtons(21, 20, 9, 10);
 
 } // end of setup()
 
