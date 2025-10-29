@@ -34,8 +34,8 @@ struct DEV_TunableWhiteLED_WithButtons : Service::LightBulb {
     temp->setRange(140, 500, 1);
 
     // Configure PWM LED pins with 20kHz frequency to prevent coil whine
-    this->warmLED = new LedPin(warmPin, 0, 20000);
-    this->coolLED = new LedPin(coolPin, 0, 20000);
+    this->warmLED = new LedPin(warmPin, 0, 10000);
+    this->coolLED = new LedPin(coolPin, 0, 10000);
 
     // Configure buttons using HomeSpan's SpanButton
     // SpanButton(pin, longTime, singleTime, doubleTime, triggerType)
@@ -43,8 +43,8 @@ struct DEV_TunableWhiteLED_WithButtons : Service::LightBulb {
     // longTime = 500ms for responsive ramping behavior
     // singleTime = 5ms (default, for debouncing)
     // doubleTime = 200ms (default, we're not using DOUBLE press)
-    this->button1 = new SpanButton(button1Pin, 500);
-    this->button2 = new SpanButton(button2Pin, 500);
+    this->button1 = new SpanButton(button1Pin, 500, 50);
+    this->button2 = new SpanButton(button2Pin, 500, 50);
 
     Serial.printf("\n=== Tunable White LED Configured ===\n");
     Serial.printf("  Warm LED: GPIO %d (20kHz PWM)\n", warmPin);
