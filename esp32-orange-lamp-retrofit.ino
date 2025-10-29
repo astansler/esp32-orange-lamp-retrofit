@@ -3,9 +3,9 @@
 // ESP32-C3 Orange Lamp Retrofit - HomeKit Control        //
 // Features:                                              //
 // - Tunable White LED with PWM control (20kHz)          //
-// - Warm White LED on GPIO 21, Cool White on GPIO 20    //
-// - Physical button on GPIO 9 for power/brightness      //
-// - Physical button on GPIO 10 for color temp control   //
+// - Warm White LED on GPIO 6, Cool White on GPIO 7      //
+// - Physical button on GPIO 4 for power/brightness      //
+// - Physical button on GPIO 5 for color temp control    //
 //                                                        //
 ////////////////////////////////////////////////////////////
 
