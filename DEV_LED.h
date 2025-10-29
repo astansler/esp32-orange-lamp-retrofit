@@ -20,10 +20,6 @@ struct DEV_TunableWhiteLED_WithButtons : Service::LightBulb {
   boolean warmingUp = false;    // Direction for color temp ramping
   int colorPreset = 0;          // Track current color preset (0=warm, 1=mid, 2=cool)
 
-  // Debouncing - prevent rapid-fire button processing
-  unsigned long lastButtonTime = 0;
-  const unsigned long BUTTON_DEBOUNCE_MS = 100;  // Minimum time between button actions
-
   // Constructor
   DEV_TunableWhiteLED_WithButtons(int warmPin, int coolPin, int button1Pin, int button2Pin) : Service::LightBulb(){
 
@@ -41,10 +37,14 @@ struct DEV_TunableWhiteLED_WithButtons : Service::LightBulb {
     this->warmLED = new LedPin(warmPin, 0, 20000);
     this->coolLED = new LedPin(coolPin, 0, 20000);
 
-    // Configure buttons with 500ms long-press threshold
-    // PushButton mode with TRIGGER_ON_RELEASE prevents continuous triggering
-    this->button1 = new SpanButton(button1Pin, PushButton::TRIGGER_ON_RELEASE);
-    this->button2 = new SpanButton(button2Pin, PushButton::TRIGGER_ON_RELEASE);
+    // Configure buttons
+    // SpanButton(pin, longTime, singleTime, doubleTime, triggerType)
+    // longTime = 2000ms (hold for 2 seconds to trigger LONG press)
+    // singleTime = 5ms (minimum press time)
+    // doubleTime = 200ms (max time between presses for DOUBLE)
+    // triggerType = TRIGGER_ON_LOW (button connects pin to GND)
+    this->button1 = new SpanButton(button1Pin, 2000, 5, 200, SpanButton::TRIGGER_ON_LOW);
+    this->button2 = new SpanButton(button2Pin, 2000, 5, 200, SpanButton::TRIGGER_ON_LOW);
 
     Serial.printf("\n=== Tunable White LED Configured ===\n");
     Serial.printf("  Warm LED: GPIO %d (20kHz PWM)\n", warmPin);
@@ -85,7 +85,7 @@ struct DEV_TunableWhiteLED_WithButtons : Service::LightBulb {
     warmLED->set(warmValue);
     coolLED->set(coolValue);
 
-    Serial.printf("LED: Bright=%d%%, Temp=%dK, Warm=%d, Cool=%d\n",
+    Serial.printf("LED: Bright=%d%%, Temp=%dK, Warm=%d, Cool=%d\n", 
                   (int)(brightness*100), mired, warmValue, coolValue);
 
     return(true);
@@ -95,37 +95,24 @@ struct DEV_TunableWhiteLED_WithButtons : Service::LightBulb {
   // Button handler: called when buttons are pressed
   void button(int pin, int pressType) override {
 
-    // Debouncing: Ignore button presses that come too quickly
-    unsigned long currentTime = millis();
-    if (currentTime - lastButtonTime < BUTTON_DEBOUNCE_MS) {
-      Serial.printf("BUTTON DEBOUNCED (too fast): Pin=%d, Type=%d\n", pin, pressType);
-      return;
-    }
-    lastButtonTime = currentTime;
-
-    Serial.printf("\n>>> BUTTON EVENT: Pin=%d, Type=%d <<<\n", pin, pressType);
-
-    // Validate button pin
-    if(pin != button1->getPin() && pin != button2->getPin()) {
-      Serial.printf("ERROR: Unknown button pin %d, ignoring\n", pin);
-      return;
-    }
+    Serial.printf("\n>>> BUTTON: Pin=%d, Type=%d <<<\n", pin, pressType);
 
     // Button 1 (Control): Power and Brightness
     if(pin == button1->getPin()) {
-
+      
       // Single press: Toggle power
       if(pressType == SpanButton::SINGLE) {
         boolean newPower = !power->getVal();
         Serial.printf("Button 1 SINGLE: Toggle power -> %s\n", newPower ? "ON" : "OFF");
         power->setVal(newPower);
       }
-
+      
       // Long press: Ramp brightness up or down
+      // Note: LONG press repeats every 2 seconds while held
       else if(pressType == SpanButton::LONG) {
         Serial.println("Button 1 LONG: Ramp brightness");
         power->setVal(true);  // Turn on if off
-
+        
         int currentBright = bright->getVal();
         int newBright;
 
@@ -135,7 +122,7 @@ struct DEV_TunableWhiteLED_WithButtons : Service::LightBulb {
           if(newBright >= 100) {
             newBright = 100;
             dimmingUp = false;  // Toggle direction at maximum
-            Serial.println("  -> Reached MAX, next will dim DOWN");
+            Serial.println("  -> MAX brightness, reversing direction");
           }
         } else {
           // Ramp down by 10%
@@ -143,22 +130,18 @@ struct DEV_TunableWhiteLED_WithButtons : Service::LightBulb {
           if(newBright <= 5) {
             newBright = 5;
             dimmingUp = true;  // Toggle direction at minimum
-            Serial.println("  -> Reached MIN, next will dim UP");
+            Serial.println("  -> MIN brightness, reversing direction");
           }
         }
 
         Serial.printf("  -> Brightness: %d%% -> %d%%\n", currentBright, newBright);
         bright->setVal(newBright);
       }
-
-      else {
-        Serial.printf("Button 1: Unhandled press type %d\n", pressType);
-      }
     }
 
     // Button 2 (Color): Color Temperature presets and ramping
     else if(pin == button2->getPin()) {
-
+      
       // Single press: Cycle through 3 color presets
       if(pressType == SpanButton::SINGLE) {
         Serial.println("Button 2 SINGLE: Cycle color preset");
@@ -188,12 +171,13 @@ struct DEV_TunableWhiteLED_WithButtons : Service::LightBulb {
         Serial.printf("  -> Preset: %s (%d mireds)\n", presetName, newTemp);
         temp->setVal(newTemp);
       }
-
+      
       // Long press: Ramp color temp towards warm or cool
+      // Note: LONG press repeats every 2 seconds while held
       else if(pressType == SpanButton::LONG) {
         Serial.println("Button 2 LONG: Ramp color temp");
         power->setVal(true);  // Turn on if off
-
+        
         int currentTemp = temp->getVal();
         int newTemp;
 
@@ -203,7 +187,7 @@ struct DEV_TunableWhiteLED_WithButtons : Service::LightBulb {
           if(newTemp >= 500) {
             newTemp = 500;
             warmingUp = false;  // Toggle direction at warm limit
-            Serial.println("  -> Reached WARM limit, next will go COOL");
+            Serial.println("  -> WARM limit, reversing direction");
           }
         } else {
           // Ramp towards cool (decrease mireds)
@@ -211,20 +195,14 @@ struct DEV_TunableWhiteLED_WithButtons : Service::LightBulb {
           if(newTemp <= 140) {
             newTemp = 140;
             warmingUp = true;  // Toggle direction at cool limit
-            Serial.println("  -> Reached COOL limit, next will go WARM");
+            Serial.println("  -> COOL limit, reversing direction");
           }
         }
 
         Serial.printf("  -> Color Temp: %d -> %d mireds\n", currentTemp, newTemp);
         temp->setVal(newTemp);
       }
-
-      else {
-        Serial.printf("Button 2: Unhandled press type %d\n", pressType);
-      }
     }
-
-    Serial.println(">>> BUTTON EVENT COMPLETE <<<\n");
 
   } // end button
 
